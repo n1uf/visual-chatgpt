@@ -896,7 +896,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', type=str, default="ImageCaptioning_cuda:0,Text2Image_cuda:0")
     args = parser.parse_args()
-    load_dict = {e.split('_')[0].strip(): e.split('_')[1].strip() for e in args.load.split(',')}
+    
+    all_tools = {
+        "ImageCaptioning": "cpu",
+        "Text2Image": "cpu",
+        "Image2Canny": "cpu",
+        "Image2Line": "cpu",
+        "Image2Hed": "cpu",
+        "Image2Scribble": "cpu",
+        "Image2Pose": "cpu",
+        "Image2Seg": "cpu",
+        "Image2Depth": "cpu",
+        "Image2Normal": "cpu",
+    }
+    if args.load.lower() == "all":  # 如果参数为 "all"，加载所有工具
+        load_dict = all_tools
+    else:  # 否则按用户指定的工具加载
+        load_dict = {e.split('_')[0].strip(): e.split('_')[1].strip() for e in args.load.split(',')}
     bot = ConversationBot(load_dict=load_dict)
     with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
         chatbot = gr.Chatbot(elem_id="chatbot", label="Visual ChatGPT")
