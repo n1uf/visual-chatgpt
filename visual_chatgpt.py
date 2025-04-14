@@ -21,6 +21,9 @@ from controlnet_aux import OpenposeDetector, MLSDdetector, HEDdetector
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.tools import Tool
 from langchain.chains.conversation.memory import ConversationBufferMemory
+from DeepSeek import DeepSeekAI
+
+# used to use OpenAI LLMs, now we use DeepSeekAI LLMs
 from langchain.llms.openai import OpenAI
 
 from huggingface_hub import hf_hub_download
@@ -825,7 +828,10 @@ class ConversationBot:
         if 'ImageCaptioning' not in load_dict:
             raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
 
-        self.llm = OpenAI(temperature=0)
+        self.llm = DeepSeekAI(
+            base_url="https://api.deepseek.com/",
+            temperature=0
+            )
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='output')
 
         self.models = dict()
