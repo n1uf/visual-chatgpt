@@ -1,13 +1,14 @@
 langchain==0.0.101
-torch==1.12.1
-torchvision==0.13.1
+torch==2.4.1
+torchvision==0.19.1
 gradio==3.20.1
+diffusers==0.32.2
+transformers==4.46.3
 accelerate
 addict
 albumentations
 basicsr
 controlnet-aux
-diffusers
 einops
 imageio
 imageio-ffmpeg
@@ -24,6 +25,5 @@ streamlit
 test-tube
 timm
 torchmetrics
-transformers
 webdataset
 yapf
