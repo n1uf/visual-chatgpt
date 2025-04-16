@@ -31,21 +31,21 @@ from huggingface_hub import hf_hub_download
 # 设置国内镜像
 hf_hub_download.endpoint = "https://hf-mirror.com"
 
-VISUAL_CHATGPT_PREFIX = """Visual ChatGPT is designed to be able to assist with a wide range of text and visual related tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. Visual ChatGPT is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
+VISUAL_DEEPSEEK_PREFIX = """Visual DeepSeek is designed to be able to assist with a wide range of text and visual related tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. Visual DeepSeek is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
-Visual ChatGPT is able to process and understand large amounts of text and images. As a language model, Visual ChatGPT can not directly read images, but it has a list of tools to finish different visual tasks. Each image will have a file name formed as "image/xxx.png", and Visual ChatGPT can invoke different tools to indirectly understand pictures. When talking about images, Visual ChatGPT is very strict to the file name and will never fabricate nonexistent files. When using tools to generate new image files, Visual ChatGPT is also known that the image may not be the same as the user's demand, and will use other visual question answering tools or description tools to observe the real image. Visual ChatGPT is able to use tools in a sequence, and is loyal to the tool observation outputs rather than faking the image content and image file name. It will remember to provide the file name from the last tool observation, if a new image is generated.
+Visual DeepSeek is able to process and understand large amounts of text and images. As a language model, Visual DeepSeek can not directly read images, but it has a list of tools to finish different visual tasks. Each image will have a file name formed as "image/xxx.png", and Visual DeepSeek can invoke different tools to indirectly understand pictures. When talking about images, Visual DeepSeek is very strict to the file name and will never fabricate nonexistent files. When using tools to generate new image files, Visual DeepSeek is also known that the image may not be the same as the user's demand, and will use other visual question answering tools or description tools to observe the real image. Visual DeepSeek is able to use tools in a sequence, and is loyal to the tool observation outputs rather than faking the image content and image file name. It will remember to provide the file name from the last tool observation, if a new image is generated.
 
-Human may provide new figures to Visual ChatGPT with a description. The description helps Visual ChatGPT to understand this image, but Visual ChatGPT should use tools to finish following tasks, rather than directly imagine from the description.
+Human may provide new figures to Visual DeepSeek with a description. The description helps Visual DeepSeek to understand this image, but Visual DeepSeek should use tools to finish following tasks, rather than directly imagine from the description.
 
-Overall, Visual ChatGPT is a powerful visual dialogue assistant tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. 
+Overall, Visual DeepSeek is a powerful visual dialogue assistant tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. 
 
 
 TOOLS:
 ------
 
-Visual ChatGPT  has access to the following tools:"""
+Visual DeepSeek  has access to the following tools:"""
 
-VISUAL_CHATGPT_FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
+VISUAL_DEEPSEEK_FORMAT_INSTRUCTIONS = """To use a tool, please use the following format:
 
 ```
 Thought: Do I need to use a tool? Yes
@@ -62,7 +62,7 @@ Thought: Do I need to use a tool? No
 ```
 """
 
-VISUAL_CHATGPT_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
+VISUAL_DEEPSEEK_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
 
 Begin!
@@ -71,8 +71,8 @@ Previous conversation history:
 {chat_history}
 
 New input: {input}
-Since Visual ChatGPT is a text language model, Visual ChatGPT must use tools to observe images rather than imagination.
-The thoughts and observations are only visible for Visual ChatGPT, Visual ChatGPT should remember to repeat important information in the final response for Human. 
+Since Visual DeepSeek is a text language model, Visual DeepSeek must use tools to observe images rather than imagination.
+The thoughts and observations are only visible for Visual DeepSeek, Visual DeepSeek should remember to repeat important information in the final response for Human. 
 Thought: Do I need to use a tool? {agent_scratchpad}"""
 
 os.makedirs('image', exist_ok=True)
@@ -824,9 +824,9 @@ class VisualQuestionAnswering:
 class ConversationBot:
     def __init__(self, load_dict):
         # load_dict = {'VisualQuestionAnswering':'cuda:0', 'ImageCaptioning':'cuda:1',...}
-        print(f"Initializing VisualChatGPT, load_dict={load_dict}")
+        print(f"Initializing VisualDeepSeek, load_dict={load_dict}")
         if 'ImageCaptioning' not in load_dict:
-            raise ValueError("You have to load ImageCaptioning as a basic function for VisualChatGPT")
+            raise ValueError("You have to load ImageCaptioning as a basic function for VisualDeepSeek")
 
         self.llm = DeepSeekAI(
             base_url="https://api.deepseek.com/",
@@ -852,8 +852,8 @@ class ConversationBot:
             verbose=True,
             memory=self.memory,
             return_intermediate_steps=True,
-            agent_kwargs={'prefix': VISUAL_CHATGPT_PREFIX, 'format_instructions': VISUAL_CHATGPT_FORMAT_INSTRUCTIONS,
-                          'suffix': VISUAL_CHATGPT_SUFFIX}, )
+            agent_kwargs={'prefix': VISUAL_DEEPSEEK_PREFIX, 'format_instructions': VISUAL_DEEPSEEK_FORMAT_INSTRUCTIONS,
+                          'suffix': VISUAL_DEEPSEEK_SUFFIX}, )
 
     def run_text(self, text, state):
         self.agent.memory.buffer = cut_dialogue_history(self.agent.memory.buffer, keep_last_n_words=500)
@@ -915,7 +915,7 @@ if __name__ == '__main__':
         load_dict = {e.split('_')[0].strip(): e.split('_')[1].strip() for e in args.load.split(',')}
     bot = ConversationBot(load_dict=load_dict)
     with gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}") as demo:
-        chatbot = gr.Chatbot(elem_id="chatbot", label="Visual ChatGPT")
+        chatbot = gr.Chatbot(elem_id="chatbot", label="Visual DeepSeek")
         state = gr.State([])
         with gr.Row():
             with gr.Column(scale=0.7):
@@ -932,4 +932,4 @@ if __name__ == '__main__':
         clear.click(bot.memory.clear)
         clear.click(lambda: [], None, chatbot)
         clear.click(lambda: [], None, state)
-        demo.launch(server_name="0.0.0.0", server_port=7868)
+        demo.launch(server_name="127.0.0.1", server_port=7868)
