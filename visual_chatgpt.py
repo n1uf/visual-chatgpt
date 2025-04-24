@@ -28,6 +28,9 @@ from langchain.llms.openai import OpenAI
 
 from huggingface_hub import hf_hub_download
 
+# 配置模型下载位置
+os.environ['HF_HOME'] = r'D:\.cache\huggingface\hub'
+
 # 设置国内镜像
 hf_hub_download.endpoint = "https://hf-mirror.com"
 
