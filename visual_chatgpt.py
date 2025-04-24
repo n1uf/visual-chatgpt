@@ -80,6 +80,31 @@ Thought: Do I need to use a tool? {agent_scratchpad}"""
 
 os.makedirs('image', exist_ok=True)
 
+# 中文处理
+def chinese_output_parser(text: str) -> Union[AgentAction, AgentFinish]:
+    text = text.strip()
+
+    # 判断是否是“操作完成”的输出
+    if "新生成的图片文件名为：" in text:
+        match = re.search(r"新生成的图片文件名为：`?(image[\\\\/][\\\\w\\-_.]+)`?", text)
+        if match:
+            image_path = match.group(1).replace("\\\\", "/")
+            return AgentFinish(return_values={"output": image_path}, log=text)
+
+    # 解析成标准 Action/Thought
+    thought_match = re.search(r"Thought:(.*)", text)
+    action_match = re.search(r"Action:(.*)", text)
+    input_match = re.search(r"Action Input:(.*)", text)
+
+    if thought_match and action_match and input_match:
+        return AgentAction(
+            tool=action_match.group(1).strip(),
+            tool_input=input_match.group(1).strip(),
+            log=text
+        )
+
+    raise ValueError(f"无法解析 LLM 输出: `{text}`")
+
 
 def seed_everything(seed):
     random.seed(seed)
