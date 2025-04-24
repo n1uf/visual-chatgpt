@@ -306,6 +306,7 @@ class Text2Image:
     @prompts(name="Generate Image From User Input Text",
              description="useful when you want to generate an image from a user input text and save it to a file. "
                          "like: generate an image of an object or something, or generate an image that includes some objects. "
+                         "if the input text is Chinese, translate into English then do the generation job."
                          "The input to this tool should be a string, representing the text used to generate image. ")
     def inference(self, text):
         image_filename = os.path.join('image', str(uuid.uuid4())[0:8] + ".png")
