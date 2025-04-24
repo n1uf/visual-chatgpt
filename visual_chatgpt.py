@@ -158,32 +158,54 @@ def get_new_image_name(org_img_name, func_name="update"):
 
 class MaskFormer:
     def __init__(self, device):
-        print("Initializing MaskFormer to %s" % device)
+        print(f"Initializing MaskFormer to {device}")
         self.device = device
         self.processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
         self.model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined").to(device)
 
     def inference(self, image_path, text):
-        threshold = 0.5
+        threshold = 0.3  # 调低阈值
         min_area = 0.02
         padding = 20
+
+        # 加载图像并调整尺寸
         original_image = Image.open(image_path)
-        image = original_image.resize((512, 512))
-        inputs = self.processor(text=text, images=image, padding="max_length", return_tensors="pt").to(self.device)
+        resized_image = original_image.convert("RGB").resize((224, 224))
+        print(f"[MaskFormer] Resized image for CLIPSeg: {resized_image.size}")
+
+        # 使用 processor 生成输入
+        inputs = self.processor(text=text, images=resized_image, return_tensors="pt").to(self.device)
+        print(f"[MaskFormer] Processor input shape before resizing: {inputs['pixel_values'].shape}")  # Debug
+
+        # 强制调整输入张量的尺寸
+        inputs['pixel_values'] = torch.nn.functional.interpolate(
+            inputs['pixel_values'], size=(224, 224), mode="bilinear", align_corners=False
+        )
+        print(f"[MaskFormer] Processor input shape after resizing: {inputs['pixel_values'].shape}")
+
+        # 模型推理
         with torch.no_grad():
             outputs = self.model(**inputs)
+        print(f"[MaskFormer] Model output shape: {outputs[0].shape}")
+
+        # 生成掩码
         mask = torch.sigmoid(outputs[0]).squeeze().cpu().numpy() > threshold
-        area_ratio = len(np.argwhere(mask)) / (mask.shape[0] * mask.shape[1])
+        area_ratio = np.count_nonzero(mask) / mask.size
+        print(f"[MaskFormer] Mask area ratio: {area_ratio:.4f}")
+
         if area_ratio < min_area:
+            print("[MaskFormer] Mask too small, skipping.")
             return None
-        true_indices = np.argwhere(mask)
+
+        # 后处理掩码
         mask_array = np.zeros_like(mask, dtype=bool)
-        for idx in true_indices:
-            padded_slice = tuple(slice(max(0, i - padding), i + padding + 1) for i in idx)
-            mask_array[padded_slice] = True
+        for i, j in np.argwhere(mask):
+            i_min, i_max = max(0, i - padding), min(mask.shape[0], i + padding + 1)
+            j_min, j_max = max(0, j - padding), min(mask.shape[1], j + padding + 1)
+            mask_array[i_min:i_max, j_min:j_max] = True
+
         visual_mask = (mask_array * 255).astype(np.uint8)
-        image_mask = Image.fromarray(visual_mask)
-        return image_mask.resize(original_image.size)
+        return Image.fromarray(visual_mask).resize(original_image.size)
 
 
 class ImageEditing:
@@ -194,7 +216,9 @@ class ImageEditing:
         self.revision = 'fp16' if 'cuda' in device else None
         self.torch_dtype = torch.float16 if 'cuda' in device else torch.float32
         self.inpaint = StableDiffusionInpaintPipeline.from_pretrained(
-            "runwayml/stable-diffusion-inpainting", revision=self.revision, torch_dtype=self.torch_dtype).to(device)
+            "stabilityai/stable-diffusion-2-inpainting", revision="fp16" if "cuda" in device else None,
+            torch_dtype=torch.float16 if "cuda" in device else torch.float32,
+        ).to(device)
 
     @prompts(name="Remove Something From The Photo",
              description="useful when you want to remove and object or something from the photo "
@@ -214,15 +238,28 @@ class ImageEditing:
         image_path, to_be_replaced_txt, replace_with_txt = inputs.split(",")
         original_image = Image.open(image_path)
         original_size = original_image.size
+
+        # 调用 MaskFormer 生成掩码
         mask_image = self.mask_former.inference(image_path, to_be_replaced_txt)
-        updated_image = self.inpaint(prompt=replace_with_txt, image=original_image.resize((512, 512)),
-                                     mask_image=mask_image.resize((512, 512))).images[0]
-        updated_image_path = get_new_image_name(image_path, func_name="replace-something")
+        if mask_image is None:
+            print("[ImageEditing] Mask generation failed, skipping.")
+            return None
+
+        # 调整图像和掩码的尺寸
+        resized_image = original_image.resize((512, 512))
+        resized_mask = mask_image.resize((512, 512))
+
+        # 调用 Stable Diffusion Inpainting
+        updated_image = self.inpaint(prompt=replace_with_txt, image=resized_image, mask_image=resized_mask).images[0]
         updated_image = updated_image.resize(original_size)
+
+        # 保存结果
+        updated_image_path = get_new_image_name(image_path, func_name="replace-something")
         updated_image.save(updated_image_path)
         print(
             f"\nProcessed ImageEditing, Input Image: {image_path}, Replace {to_be_replaced_txt} to {replace_with_txt}, "
-            f"Output Image: {updated_image_path}")
+            f"Output Image: {updated_image_path}"
+        )
         return updated_image_path
 
 
