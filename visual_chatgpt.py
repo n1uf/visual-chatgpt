@@ -18,6 +18,10 @@ from diffusers import EulerAncestralDiscreteScheduler
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
 from controlnet_aux import OpenposeDetector, MLSDdetector, HEDdetector
 
+from controlnet_aux import HEDdetector
+
+from typing import Union
+
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.tools import Tool
 from langchain.schema import AgentFinish, AgentAction
@@ -459,22 +463,30 @@ class LineText2Image:
 
 
 class Image2Hed:
-    def __init__(self, device):
+    def __init__(self, device="cuda"):
         print("Initializing Image2Hed")
-        self.detector = HEDdetector.from_pretrained('lllyasviel/ControlNet')
+        self.detector = HEDdetector.from_pretrained("lllyasviel/Annotators")
+        self.detector.to(device)
 
     @prompts(name="Hed Detection On Image",
              description="useful when you want to detect the soft hed boundary of the image. "
                          "like: detect the soft hed boundary of this image, or hed boundary detection on image, "
                          "or peform hed boundary detection on this image, or detect soft hed boundary image of this image. "
                          "The input to this tool should be a string, representing the image_path")
-    def inference(self, inputs):
-        image = Image.open(inputs)
+
+
+    def inference(self, image_path):
+        image = Image.open(image_path).convert("RGB")
         hed = self.detector(image)
-        updated_image_path = get_new_image_name(inputs, func_name="hed-boundary")
+
+        updated_image_path = self.get_new_image_name(image_path, func_name="hed-boundary")
         hed.save(updated_image_path)
-        print(f"\nProcessed Image2Hed, Input Image: {inputs}, Output Hed: {updated_image_path}")
+        print(f"\nProcessed Image2Hed, Input Image: {image_path}, Output Hed: {updated_image_path}")
         return updated_image_path
+
+    def get_new_image_name(self, original_path, func_name="processed"):
+        base, ext = os.path.splitext(original_path)
+        return f"{base}_{func_name}{ext}"
 
 
 class HedText2Image:
