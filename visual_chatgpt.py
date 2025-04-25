@@ -931,6 +931,7 @@ class ConversationBot:
             verbose=True,
             memory=self.memory,
             return_intermediate_steps=True,
+            output_parser=chinese_output_parser,
             agent_kwargs={'prefix': VISUAL_DEEPSEEK_PREFIX, 'format_instructions': VISUAL_DEEPSEEK_FORMAT_INSTRUCTIONS,
                           'suffix': VISUAL_DEEPSEEK_SUFFIX}, )
 
