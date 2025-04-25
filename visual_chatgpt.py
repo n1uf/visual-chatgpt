@@ -20,6 +20,7 @@ from controlnet_aux import OpenposeDetector, MLSDdetector, HEDdetector
 
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.tools import Tool
+from langchain.schema import AgentFinish, AgentAction
 from langchain.chains.conversation.memory import ConversationBufferMemory
 from DeepSeek import DeepSeekAI
 
