@@ -173,7 +173,7 @@ class MaskFormer:
         self.model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined").to(device)
 
     def inference(self, image_path, text):
-        threshold = 0.3  # 调低阈值
+        threshold = 0.1  # 调低阈值
         min_area = 0.02
         padding = 20
 
