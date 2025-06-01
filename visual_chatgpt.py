@@ -45,6 +45,8 @@ Visual DeepSeek is able to process and understand large amounts of text and imag
 
 Human may provide new figures to Visual DeepSeek with a description. The description helps Visual DeepSeek to understand this image, but Visual DeepSeek should use tools to finish following tasks, rather than directly imagine from the description.
 
+If there is no image, Visual DeepSeek will not pretend to have an image name, and will not use any tool which needs an image as one of the input, instead it will use the text input to finish the task.
+
 Overall, Visual DeepSeek is a powerful visual dialogue assistant tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. 
 
 
@@ -71,6 +73,7 @@ Thought: Do I need to use a tool? No
 """
 
 VISUAL_DEEPSEEK_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
+Do not fake any image name, if there is no input image, never pretend to have an image name.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
 
 Begin!
@@ -422,7 +425,8 @@ class CannyText2Image:
                          " like: generate a real image of a object or something from this canny image,"
                          " or generate a new real image of a object or something from this edge image. "
                          "The input to this tool should be a comma seperated string of two, "
-                         "representing the image_path and the user description. ")
+                         "representing the image_path and the user description. "
+                         "if there is no image, don't pretend to have an image name, and don't use this tool.")
     def inference(self, inputs):
         image_path, instruct_text = inputs.split(",")[0], ','.join(inputs.split(',')[1:])
         image = Image.open(image_path)
