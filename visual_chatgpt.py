@@ -75,6 +75,7 @@ Thought: Do I need to use a tool? No
 VISUAL_DEEPSEEK_SUFFIX = """You are very strict to the filename correctness and will never fake a file name if it does not exist.
 Do not fake any image name, if there is no input image, never pretend to have an image name.
 You will remember to provide the image file name loyally if it's provided in the last tool observation.
+If the answer is not Chinese, you should translate it into Chinese and provide the answer in Chinese. Don't add any other content including translation process.
 
 Begin!
 
