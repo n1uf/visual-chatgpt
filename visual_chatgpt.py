@@ -1003,7 +1003,7 @@ class ConversationBot:
                        "but you should use tools to finish following tasks, " \
                        "rather than directly imagine from my description. If you understand, say \"Received\". \n".format(
             image_filename, description)
-        AI_prompt = "Received.  "
+        AI_prompt = "已收到图片  "
         self.agent.memory.buffer = self.agent.memory.buffer + Human_prompt + 'AI: ' + AI_prompt
         state = state + [(f"![](/file={image_filename})*{image_filename}*", AI_prompt)]
         print(f"\nProcessed run_image, Input image: {image_filename}\nCurrent state: {state}\n"
@@ -1038,12 +1038,12 @@ if __name__ == '__main__':
         state = gr.State([])
         with gr.Row():
             with gr.Column(scale=0.7):
-                txt = gr.Textbox(show_label=False, placeholder="Enter text and press enter, or upload an image").style(
+                txt = gr.Textbox(show_label=False, placeholder="输入文本并按下enter键，点击“上传图像”来上传图像").style(
                     container=False)
             with gr.Column(scale=0.15, min_width=0):
-                clear = gr.Button("Clear")
+                clear = gr.Button("清除对话")
             with gr.Column(scale=0.15, min_width=0):
-                btn = gr.UploadButton("Upload", file_types=["image"])
+                btn = gr.UploadButton("上传图像", file_types=["image"])
 
         txt.submit(bot.run_text, [txt, state], [chatbot, state])
         txt.submit(lambda: "", None, txt)
