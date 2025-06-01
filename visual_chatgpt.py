@@ -329,7 +329,7 @@ class Text2Image:
 
 class Text2ImagePro:
     def __init__(self, device):
-        print("Initializing Text2Image to %s" % device)
+        print("Initializing Text2ImagePro to %s" % device)
         self.device = device
         self.torch_dtype = torch.float16 if 'cuda' in device else torch.float32
         self.pipe = StableDiffusionXLPipeline.from_pretrained(
@@ -343,8 +343,8 @@ class Text2ImagePro:
         self.n_prompt = 'longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, ' \
                         'fewer digits, cropped, worst quality, low quality'
 
-    @prompts(name="Generate Image From User Input Text",
-             description="useful when you want to generate an image from a user input text and save it to a file. "
+    @prompts(name="Generate Higher Quality Image From User Input Text",
+             description="useful when you want to generate a high quality image from a user input text and save it to a file. "
                          "like: generate an image of an object or something, or generate an image that includes some objects. "
                          "if the input text is Chinese, translate into English then do the generation job."
                          "The input to this tool should be a string, representing the text used to generate image. ")
@@ -357,7 +357,7 @@ class Text2ImagePro:
             guidance_scale=7.5
         ).images[0]
         image.save(image_filename)
-        print(f"\nProcessed Text2Image, Input Text: {text}, Output Image: {image_filename}")
+        print(f"\nProcessed Text2ImagePro, Input Text: {text}, Output Image: {image_filename}")
         return image_filename    
 
 
